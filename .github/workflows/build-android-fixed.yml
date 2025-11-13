@@ -20,7 +20,7 @@ jobs:
 
       - name: Navigate to project folder and install dependencies
         run: |
-          cd SOSNet
+         
           flutter pub get
 
       - name: Build APK
