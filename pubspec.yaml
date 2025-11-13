@@ -11,4 +11,3 @@ dependencies:
 
 flutter:
   uses-material-design: true
-Fix finale pubspec.yaml
