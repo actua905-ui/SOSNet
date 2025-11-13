@@ -1,7 +1,7 @@
 name: pubspec.yaml
 
 name: sosnet
-description: App di supporto SOSNet ❤️💙
+description: App di supporto SOSNet
 version: 1.0.0+1
 
 environment:
