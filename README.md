@@ -1,32 +1,15 @@
+name: pubspec.yaml
 
-name: Build Android APK
+name: sosnet
+description: App di supporto SOSNet ❤️💙
+version: 1.0.0+1
 
-on:
-  push:
-    branches:
-      - main
+environment:
+  sdk: '>=3.0.0 <4.0.0'
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+dependencies:
+  flutter:
+    sdk: flutter
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.16.0'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SOSNet-APK
-          path: build/app/outputs/flutter-apk/app-release.apk  
+flutter:
+  uses-material-design: true
