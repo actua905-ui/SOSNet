@@ -31,5 +31,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SOSNet-APK
+          name: 
           path: SOSNet/build/app/outputs/flutter-apk/app-release.apk
