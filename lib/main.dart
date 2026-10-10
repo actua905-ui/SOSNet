@@ -1,5 +1,7 @@
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const SOSNetApp());
@@ -50,7 +52,7 @@ class SOSNetHome extends StatelessWidget {
       ),
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -72,16 +74,16 @@ class SOSNetHome extends StatelessWidget {
                     onPressed: () {
                       showDialog<void>(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('SOSNet'),
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('SOSNet - Versione di prova'),
                           content: const Text(
-                            'Questa è una versione di prova. '
                             'Il pulsante SOS non invia ancora '
-                            'richieste di soccorso.',
+                            'richieste di soccorso reali.',
                           ),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: () =>
+                                  Navigator.pop(dialogContext),
                               child: const Text('Ho capito'),
                             ),
                           ],
@@ -106,10 +108,7 @@ class SOSNetHome extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
-                          'CHIEDI AIUTO',
-                          style: TextStyle(fontSize: 12),
-                        ),
+                        Text('CHIEDI AIUTO'),
                       ],
                     ),
                   ),
@@ -120,20 +119,10 @@ class SOSNetHome extends StatelessWidget {
                   height: 64,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('I miei contatti'),
-                          content: const Text(
-                            'La rubrica dei contatti sarà '
-                            'aggiunta in una prossima versione.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Chiudi'),
-                            ),
-                          ],
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ContactsPage(),
                         ),
                       );
                     },
@@ -163,6 +152,196 @@ class SOSNetHome extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ContactsPage extends StatefulWidget {
+  const ContactsPage({super.key});
+
+  @override
+  State<ContactsPage> createState() => _ContactsPageState();
+}
+
+class _ContactsPageState extends State<ContactsPage> {
+  static const storageKey = 'sosnet_contacts';
+
+  List<Map<String, String>> contacts = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadContacts();
+  }
+
+  Future<void> loadContacts() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(storageKey);
+
+      if (saved != null) {
+        final List<dynamic> decoded = jsonDecode(saved);
+        contacts = decoded.map((item) {
+          return Map<String, String>.from(item);
+        }).toList();
+      }
+    } catch (_) {
+      contacts = [];
+    }
+
+    if (mounted) {
+      setState(() => loading = false);
+    }
+  }
+
+  Future<void> saveContacts() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(storageKey, jsonEncode(contacts));
+  }
+
+  Future<void> addContact() async {
+    final nameController = TextEditingController();
+    final phoneController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Nuovo contatto'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome e cognome',
+                  prefixIcon: Icon(Icons.person),
+                ),
+                textCapitalization: TextCapitalization.words,
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Numero di telefono',
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annulla'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.trim().isNotEmpty &&
+                  phoneController.text.trim().isNotEmpty) {
+                Navigator.pop(dialogContext, true);
+              }
+            },
+            child: const Text('Salva'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      setState(() {
+        contacts.add({
+          'name': nameController.text.trim(),
+          'phone': phoneController.text.trim(),
+        });
+      });
+
+      try {
+        await saveContacts();
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Non è stato possibile salvare il contatto.'),
+            ),
+          );
+        }
+      }
+    }
+
+    nameController.dispose();
+    phoneController.dispose();
+  }
+
+  Future<void> deleteContact(int index) async {
+    final removed = contacts.removeAt(index);
+    setState(() {});
+
+    try {
+      await saveContacts();
+    } catch (_) {
+      if (mounted) {
+        setState(() => contacts.insert(index, removed));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Non è stato possibile eliminare il contatto.'),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const blu = Color(0xFF174A8B);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('I miei contatti'),
+        backgroundColor: blu,
+        foregroundColor: Colors.white,
+      ),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : contacts.isEmpty
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'Non hai ancora aggiunto contatti.\n'
+                      'Premi + per inserire una persona fidata.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 17),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: contacts.length,
+                  itemBuilder: (context, index) {
+                    final contact = contacts[index];
+                    return ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: blu,
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                      title: Text(contact['name'] ?? ''),
+                      subtitle: Text(contact['phone'] ?? ''),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Elimina contatto',
+                        onPressed: () => deleteContact(index),
+                      ),
+                    );
+                  },
+                ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: addContact,
+        backgroundColor: blu,
+        foregroundColor: Colors.white,
+        tooltip: 'Aggiungi contatto',
+        child: const Icon(Icons.add),
       ),
     );
   }
