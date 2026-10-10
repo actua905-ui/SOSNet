@@ -1,9 +1,11 @@
+
 name: Build Android APK
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,21 +13,36 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.0'
+          channel: stable
+
+      - name: Create clean Android project
+        run: flutter create --platforms=android --project-name sosnet "$RUNNER_TEMP/sosnet_build"
+
+      - name: Copy SOSNet app files
+        run: |
+          cp pubspec.yaml "$RUNNER_TEMP/sosnet_build/pubspec.yaml"
+          mkdir -p "$RUNNER_TEMP/sosnet_build/lib"
+          cp lib/main.dart "$RUNNER_TEMP/sosnet_build/lib/main.dart"
 
       - name: Install dependencies
+        working-directory: ${{ runner.temp }}/sosnet_build
         run: flutter pub get
 
       - name: Build APK
+        working-directory: ${{ runner.temp }}/sosnet_build
         run: flutter build apk --release
+
+      - name: Prepare APK
+        run: cp "$RUNNER_TEMP/sosnet_build/build/app/outputs/flutter-apk/app-release.apk" "$GITHUB_WORKSPACE/SOSNet-APK.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SOSNet-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: SOSNet-APK.apk
+          if-no-files-found: error
