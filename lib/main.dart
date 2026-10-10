@@ -71,25 +71,51 @@ class SOSNetHome extends StatelessWidget {
                   width: 210,
                   height: 210,
                   child: ElevatedButton(
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (dialogContext) => AlertDialog(
-                          title: const Text('SOSNet - Versione di prova'),
-                          content: const Text(
-                            'Il pulsante SOS non invia ancora '
-                            'richieste di soccorso reali.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () =>
-                                  Navigator.pop(dialogContext),
-                              child: const Text('Ho capito'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    
+onPressed: () {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Conferma richiesta SOS'),
+      content: const Text(
+        'Vuoi proseguire con la richiesta SOS?\n\n'
+        'Attenzione: questa versione è ancora di prova. '
+        'Non vengono effettuate chiamate e non vengono '
+        'inviati avvisi reali.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Annulla'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(dialogContext);
+            showDialog<void>(
+              context: context,
+              builder: (resultContext) => AlertDialog(
+                title: const Text('SOSNet - Versione di prova'),
+                content: const Text(
+                  'Hai confermato la richiesta di prova. '
+                  'Nessun allarme è stato inviato e nessun '
+                  'soccorso è stato contattato.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(resultContext),
+                    child: const Text('Ho capito'),
+                  ),
+                ],
+              ),
+            );
+          },
+          child: const Text('Conferma'),
+        ),
+      ],
+    ),
+  );
+},
+
                     style: ElevatedButton.styleFrom(
                       backgroundColor: rosso,
                       foregroundColor: Colors.white,
