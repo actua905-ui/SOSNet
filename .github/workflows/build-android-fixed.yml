@@ -15,19 +15,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Create clean Android project
-        run: flutter create --platforms=android --project-name sosnet "$RUNNER_TEMP/sosnet_build"
+        run: |
+          flutter create -t app --platforms=android --project-name sosnet "$RUNNER_TEMP/sosnet_build"
 
       - name: Copy SOSNet app files
         run: |
           cp pubspec.yaml "$RUNNER_TEMP/sosnet_build/pubspec.yaml"
-          mkdir -p "$RUNNER_TEMP/sosnet_build/lib"
-          cp lib/main.dart "$RUNNER_TEMP/sosnet_build/lib/main.dart"
+          cp -r lib "$RUNNER_TEMP/sosnet_build/lib"
+
+          if [ -d assets ]; then
+            cp -r assets "$RUNNER_TEMP/sosnet_build/"
+          fi
 
       - name: Install dependencies
         working-directory: ${{ runner.temp }}/sosnet_build
@@ -37,12 +47,9 @@ jobs:
         working-directory: ${{ runner.temp }}/sosnet_build
         run: flutter build apk --release
 
-      - name: Prepare APK
-        run: cp "$RUNNER_TEMP/sosnet_build/build/app/outputs/flutter-apk/app-release.apk" "$GITHUB_WORKSPACE/SOSNet-APK.apk"
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: SOSNet-APK
-          path: SOSNet-APK.apk
+          path: ${{ runner.temp }}/sosnet_build/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
