@@ -16,8 +16,8 @@ class SOSNetApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SOSNet',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF174A8B),
+      colorScheme: ColorScheme.fromSeed(
+  seedColor: Colors.deepPurple),
         ),
         useMaterial3: true,
       ),
@@ -55,7 +55,7 @@ class SOSNetHome extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+             mainAxisAlignment: MainAxisAlignment.center, 
               children: [
                 const Text(
                   'Un SOS, mille cuori in ascolto',
